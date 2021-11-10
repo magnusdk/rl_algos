@@ -1,0 +1,24 @@
+[tool.poetry]
+authors = ["Magnus Dalen Kvalevåg <magnus.kvalevag@gmail.com>"]
+description = ""
+name = "rl_algos"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+dm-haiku = "^0.0.4"
+gym = "^0.20.0"
+jax = "0.2.20"
+jaxlib = {url = "https://storage.googleapis.com/jax-releases/cuda111/jaxlib-0.1.71+cuda111-cp38-none-manylinux2010_x86_64.whl"}
+matplotlib = "^3.4.3"
+python = "^3.8"
+optax = "^0.0.9"
+rlax = "^0.0.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = "^21.10b0"
+ipykernel = "^6.5.0"
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]

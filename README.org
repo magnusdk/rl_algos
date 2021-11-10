@@ -1,0 +1,4 @@
+* Hello
+This is a repository of some (core) Reinforcement Learning algorithms implemented in JAX.
+
+Currently only implements REINFORCE though.

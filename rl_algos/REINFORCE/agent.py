@@ -1,4 +1,3 @@
-import haiku as hk
 import jax
 import jax.numpy as jnp
 import rlax
@@ -7,26 +6,24 @@ from rl_algos.REINFORCE.trajectory import Trajectory
 
 def _jitted_select_action(network):
     def select_action(params, rng_key, obs):
-        apply_rng_key, action_sample_rng_key = jax.random.split(rng_key, num=2)
-        action_probs = network.apply(params, apply_rng_key, obs)
+        action_probs = network(params, obs)
 
         # Sample randomly using the calculated action probabilities
-        a = rlax.categorical_sample(action_sample_rng_key, action_probs)
-        return a
+        return rlax.categorical_sample(rng_key, action_probs)
 
     return jax.jit(select_action)
 
 
 def _jitted_update_step(network, discount, alpha):
-    def update_step(rng_key, params, t, rewards, state, a):
+    def update_step(params, t, rewards_from_t, state, a):
         # Calculate discounted return
-        discounts = discount ** jnp.arange(len(rewards))
-        G = jnp.sum(discounts * jnp.array(rewards))
+        discounts = discount ** jnp.arange(len(rewards_from_t))
+        G = jnp.sum(discounts * jnp.array(rewards_from_t))
 
         # Define the gradient of the log-probability of choosing action a
         @jax.grad  # Behold (one of) the power(s) of JAX!
         def log_prob_of_a_gradient(params):
-            action_probs = network.apply(params, rng_key, state)
+            action_probs = network(params, state)
             prob_of_a = action_probs[a]
             return jnp.log(prob_of_a)
 
@@ -47,11 +44,11 @@ def _jitted_update_step(network, discount, alpha):
 class Agent:
     def __init__(
         self,
-        network: hk.Transformed,
-        initial_params: hk.Params,
+        network,
+        initial_params,
         rng_key,
         discount: float = 0.99,
-        alpha: float = 0.001,
+        alpha: float = 0.01,
     ):
         self.params = initial_params
         self.rng_key = rng_key
@@ -69,8 +66,6 @@ class Agent:
         # For every step t in trajectory, perform update.
         # See REINFORCE algorithm.
         for t in range(len(trajectory)):
-            self.rng_key, sub_rng_key = jax.random.split(self.rng_key, num=2)
             s, a, _, _ = trajectory[t]
-            self.params = self._update_step(
-                sub_rng_key, self.params, t, trajectory[t:].r, s, a
-            )
+            rewards_from_t = trajectory[t:].r
+            self.params = self._update_step(self.params, t, rewards_from_t, s, a)

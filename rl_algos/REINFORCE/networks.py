@@ -1,17 +1,13 @@
-import haiku as hk
 import jax
+import jax.numpy as jnp
 
 
-def get_network(n_actions) -> hk.Transformed:
-    def network(x):
-        f = hk.Sequential(
-            [
-                hk.Linear(32),
-                jax.nn.relu,
-                hk.Linear(n_actions),
-                jax.nn.softmax,
-            ]
-        )
-        return f(x)
+def get_network():
+    def logistic(x):
+        return 1 / (1 + jnp.exp(-x))
 
-    return hk.transform(network)
+    def network(params, state):
+        p = logistic(jnp.dot(params, state))
+        return jnp.array([p, 1 - p])
+
+    return jax.jit(network)
